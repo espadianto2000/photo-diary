@@ -1,0 +1,2 @@
+# Expo recommends a hoisted layout for pnpm so native autolinking can see dependencies.
+nodeLinker: hoisted

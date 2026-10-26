@@ -1,5 +1,7 @@
 import {
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
@@ -31,6 +33,17 @@ export const loginUser = async (email: string, password: string): Promise<User> 
 export const logoutUser = async (): Promise<void> => {
   try {
     await firebaseSignOut(auth)
+  } catch (error: any) {
+    throw new Error(error.message)
+  }
+}
+
+// Iniciar sesión con el idToken de Google
+export const loginWithGoogle = async (idToken: string): Promise<User> => {
+  try {
+    const credential = GoogleAuthProvider.credential(idToken)
+    const userCredential = await signInWithCredential(auth, credential)
+    return userCredential.user
   } catch (error: any) {
     throw new Error(error.message)
   }
