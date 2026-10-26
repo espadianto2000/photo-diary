@@ -1,6 +1,13 @@
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
-import { loginUser, logoutUser, registerUser, onAuthStateChange, loginWithGoogle } from "../services/auth.service"
+import {
+  loginUser,
+  loginWithGoogle,
+  logoutUser,
+  onAuthStateChange,
+  registerUser,
+  requestPasswordReset,
+} from "../services/auth.service"
 import type { User } from "firebase/auth"
 
 interface AuthContextType {
@@ -9,6 +16,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   signInWithGoogle: (idToken: string) => Promise<void>
+  resetPassword: (email: string) => Promise<void>
   isLoading: boolean
 }
 
@@ -28,43 +36,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const firebaseUser = await loginUser(email, password)
-      setUser(firebaseUser)
-    } catch (error: any) {
-      throw new Error(error.message)
-    }
+    const firebaseUser = await loginUser(email, password)
+    setUser(firebaseUser)
   }
 
   const signUp = async (email: string, password: string) => {
-    try {
-      const firebaseUser = await registerUser(email, password)
-      setUser(firebaseUser)
-    } catch (error: any) {
-      throw new Error(error.message)
-    }
+    const firebaseUser = await registerUser(email, password)
+    setUser(firebaseUser)
   }
 
   const signOut = async () => {
-    try {
-      await logoutUser()
-      setUser(null)
-    } catch (error: any) {
-      throw new Error(error.message)
-    }
+    await logoutUser()
+    setUser(null)
   }
 
   const signInWithGoogle = async (idToken: string) => {
-    try {
-      const firebaseUser = await loginWithGoogle(idToken)
-      setUser(firebaseUser)
-    } catch (error: any) {
-      throw new Error(error.message)
-    }
+    const firebaseUser = await loginWithGoogle(idToken)
+    setUser(firebaseUser)
+  }
+
+  const resetPassword = async (email: string) => {
+    await requestPasswordReset(email)
   }
 
   return (
-    <AuthContext.Provider value={{ user, signIn, signUp, signOut, signInWithGoogle, isLoading }}>
+    <AuthContext.Provider value={{ user, signIn, signUp, signOut, signInWithGoogle, resetPassword, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

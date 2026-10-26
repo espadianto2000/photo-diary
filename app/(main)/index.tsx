@@ -1,50 +1,63 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native"
-import { useAuth } from "../../context/AuthContext"
+import { Text, TouchableOpacity, View } from "react-native"
 import { router } from "expo-router"
-import { useState } from "react"
+import { AppScreen } from "../../components/AppScreen"
+import { canJoinAnotherGroup, MAX_GROUPS_PER_USER, MAX_MEMBERS_PER_GROUP, type GroupSummary } from "../../utils/groups"
+
+const myGroups: GroupSummary[] = []
 
 export default function HomeScreen() {
-  const { user, signOut } = useAuth()
-  const [loading, setLoading] = useState(false)
-
-  const handleLogout = async () => {
-    Alert.alert("Cerrar Sesión", "¿Estás seguro que deseas cerrar sesión?", [
-      {
-        text: "Cancelar",
-        style: "cancel",
-      },
-      {
-        text: "Cerrar Sesión",
-        style: "destructive",
-        onPress: async () => {
-          setLoading(true)
-          try {
-            await signOut()
-            router.replace("/(auth)")
-          } catch (error: any) {
-            Alert.alert("Error", error.message || "No se pudo cerrar sesión")
-          } finally {
-            setLoading(false)
-          }
-        },
-      },
-    ])
-  }
+  const open = canJoinAnotherGroup(myGroups.length)
 
   return (
-    <View className="flex-1 justify-center items-center px-6 bg-white dark:bg-black">
-      <Text className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Home</Text>
+    <AppScreen title="Grupos" action={{ label: "Cuenta", onPress: () => router.push("/(main)/account") }}>
+      <View className="flex-1 px-5">
+        <Text className="text-base text-gray-600 dark:text-gray-400 mb-4">
+          Puedes estar en {MAX_GROUPS_PER_USER} grupos. Cada uno admite hasta {MAX_MEMBERS_PER_GROUP} personas.
+        </Text>
 
-      <Text className="text-lg mb-2 text-gray-700 dark:text-gray-300">Bienvenido</Text>
-      <Text className="text-base mb-8 text-gray-600 dark:text-gray-400">{user?.email}</Text>
+        {myGroups.length === 0 ? (
+          <View className="rounded-2xl bg-gray-100 dark:bg-gray-900 px-4 py-6 mb-6">
+            <Text className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Todavía no tienes grupos</Text>
+            <Text className="text-base text-gray-600 dark:text-gray-400">
+              Crea uno para tu viaje o únete con un código.
+            </Text>
+          </View>
+        ) : (
+          <View className="mb-6">
+            {myGroups.map((group) => (
+              <View key={group.id} className="rounded-2xl bg-gray-100 dark:bg-gray-900 px-4 py-4 mb-3">
+                <Text className="text-lg font-semibold text-gray-900 dark:text-white">{group.name}</Text>
+                <Text className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {group.memberCount} de {MAX_MEMBERS_PER_GROUP} · {group.role === "owner" ? "Lo creaste" : "Te uniste"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-      <TouchableOpacity
-        className={`px-6 py-3 rounded-lg ${loading ? "bg-red-400 dark:bg-red-700" : "bg-red-600 dark:bg-red-500 active:opacity-80"}`}
-        onPress={handleLogout}
-        disabled={loading}
-      >
-        <Text className="text-white font-semibold">{loading ? "Cerrando..." : "Cerrar Sesión"}</Text>
-      </TouchableOpacity>
-    </View>
+        {open ? (
+          <View className="gap-3">
+            <TouchableOpacity
+              className="py-3 rounded-lg bg-blue-600 dark:bg-blue-500 active:opacity-80"
+              onPress={() => router.push("/(main)/groups/create")}
+            >
+              <Text className="text-white text-center font-semibold text-lg">Crear grupo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="py-3 rounded-lg border-2 border-gray-300 dark:border-gray-700 active:opacity-80"
+              onPress={() => router.push("/(main)/groups/join")}
+            >
+              <Text className="text-gray-900 dark:text-white text-center font-semibold text-lg">Unirme a un grupo</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View className="rounded-2xl bg-gray-100 dark:bg-gray-900 px-4 py-4">
+            <Text className="text-base text-gray-900 dark:text-white">
+              Ya estás en {MAX_GROUPS_PER_USER} grupos. Para crear o unirte a otro, primero sal de uno.
+            </Text>
+          </View>
+        )}
+      </View>
+    </AppScreen>
   )
 }
